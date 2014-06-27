@@ -41,18 +41,6 @@ class RSSGet extends DOMDocument
 		$this->getItems();
 	}
 
-	private function _checkType()
-	{
-		if ( is_object( $this->getElementsByTagName( 'feed' )->item( 0 ) ) ) {
-			$this->_feed_type = 'atom';
-			$this->_channel_tag = 'feed';
-			$this->_item_tag = 'entry';
-		} else {
-			$this->_feed_type = 'rss';
-			$this->_channel_tag = 'channel';
-			$this->_item_tag = 'item';
-		}
-	}
 
 	public function getChannel()
 	{
@@ -74,7 +62,36 @@ class RSSGet extends DOMDocument
 
 	public function getItems()
 	{
+        if ( $this->_items === false ) {
+            $this->_items = $this->parseItems();
+        }
+        return $this->_items;
+    }
+
+    /**
+     * Checks Type of rss feed. Depending on that type (ATOM or RSS) should  set/initialize  corresponding tag names
+     * for items/channels/feed
+     * @return void; 
+     */
+	private function _checkType()
+	{
+		if ( is_object( $this->getElementsByTagName( 'feed' )->item( 0 ) ) ) {
+			$this->_feed_type = 'atom';
+			$this->_channel_tag = 'feed';
+			$this->_item_tag = 'entry';
+		} else {
+			$this->_feed_type = 'rss';
+			$this->_channel_tag = 'channel';
+			$this->_item_tag = 'item';
+		}
+	}
+
+    public function parseItems() { 
+        if ( empty($this->_item_tag ) ) {
+            throw new \LogicException( "ItemTag should be autodetected by _checkType and should not be empty. Have you called getItems() twice ? ");
+        }
 		$elements = $this->getElementsByTagName( $this->_item_tag );
+
 		for ( $i = 0; $i < $elements->length; $i++ ) {
 			$item_elements = $elements->item( $i )->getElementsByTagName( '*' );
 			for ( $j = 0; $j < $item_elements->length; $j++ ) {
